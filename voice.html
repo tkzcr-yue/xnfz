@@ -1,0 +1,894 @@
+<!doctype html>
+<html>
+
+<head>
+  <meta charset="utf-8">
+  <title>智能语音品侧</title>
+
+  <link rel="stylesheet" href="https://unpkg.com/element-ui/lib/theme-chalk/index.css">
+  <link type="text/css" rel="stylesheet" href="css/style.css">
+
+  <link rel="stylesheet" href="https://unpkg.com/element-ui/lib/theme-chalk/index.css">
+
+
+
+  <!--已包含recorder-core和mp3格式支持, CDN: -->
+  <script src="https://cdn.jsdelivr.net/gh/xiangyuecn/Recorder@latest/recorder.wav.min.js"></script>
+
+  <script
+    src="https://cdn.jsdelivr.net/gh/xiangyuecn/Recorder@latest/src/extensions/frequency.histogram.view.js"></script>
+  <script src="https://cdn.jsdelivr.net/gh/xiangyuecn/Recorder@latest/src/extensions/lib.fft.js"></script>
+  <style>
+    #roll {
+      margin: 91px 0;
+      height: 22px;
+      overflow: hidden;
+      position: absolute;
+    }
+
+    #roll li {
+      height: 22px;
+      line-height: 22px;
+      font-size: 12px;
+    }
+  </style>
+
+
+</head>
+
+<body>
+  <div id="app">
+    <title-template></title-template>
+
+    <div class="seizeAseat"></div>
+    <div class="jn_title2">
+      <h2 class="jn_title"><span>智能语音评测</span><b>Speech Assessment</b>
+        <div class="voice_text w1200">
+          <span style="color: #565656;font-weight: 400;">右侧可切换语言模式，点击图标可播放标准口音，点击测一测可录口音进行比对评测打分.</span>
+          <span style="margin-top: -26px;color: #565656;font-weight: 400;">On the right side, you can switch the
+            language mode, click the icon
+            to play the standard accent, and click
+            test one to record the accent for comparison and scoring</span>
+        </div>
+      </h2>
+    </div>
+
+    <ul class="voice_tab w1200">
+      <li class="on">了解产品（旗袍）</li>
+      <li>包装洽谈（陶瓷）</li>
+      <li>合同洽谈</li>
+    </ul>
+
+    <div class="w1200 clearfix">
+      <div class="voice_left voice_content" style="display:block;">
+        <ul>
+          <li v-for="item in cheongsam">
+            <div v-if="item.name" v-on:click="clickSpeak(item.num,1)">
+              <a href="javascript:;"><img v-if="item.name == '麦克'" src="images/jn_27.png" alt="" /></a>
+              <span>{{ item.name }}：</span>
+              <b>{{ item.content }}</b>
+            </div>
+          </li>
+        </ul>
+      </div>
+
+      <div class="voice_left voice_content">
+        <ul>
+          <li v-for="item in ceramics">
+            <div v-if="item.name" v-on:click="clickSpeak(item.num,2)">
+              <a href="javascript:;"><img v-if="item.name == '麦克'" src="images/jn_27.png" alt="" /></a>
+              <span>{{ item.name }}：</span>
+              <b>{{ item.content }}</b>
+            </div>
+          </li>
+        </ul>
+      </div>
+
+      <div class="voice_left voice_content">
+        <ul>
+          <li v-for="item in contract">
+            <div v-if="item.name" v-on:click="clickSpeak(item.num,3)">
+              <a href="javascript:;"><img v-if="item.name == '麦克'" src="images/jn_27.png" alt="" /></a>
+              <span>{{ item.name }}：</span>
+              <b>{{ item.content }}</b>
+            </div>
+          </li>
+        </ul>
+      </div>
+
+      <div class="voice_right">
+        <h2>评测内容</h2>
+        <div>
+          <div v-for="(item,index) in demoContent" class="voice_right_txt"
+            :style="item.name == '麦克' ? 'color:#f26917;':''">
+            <a href="javascript:;" style="padding-left: 10px;"><img src="images/jn_28.png" style="float: left;
+              top: 5px;position: relative;" v-on:click="haha('player' + index)" alt="" />
+              <!-- <img :src="item.file" alt="" srcset=""> -->
+              <audio :id="'player' + index" :src='item.file'>
+                <!-- <source ></source> -->
+              </audio></a>
+            {{ item.name }} : <span :class="item.name == '麦克' ? 'mike':''">{{ item.content }}</span>
+
+          </div>
+          <!-- <div v-for="item in demoContent" class="voice_right_txt" :style="item.name == '麦克' ? 'color:#f26917;':''">
+            {{ item.name }} : <span :class="item.name == '麦克' ? 'mike':''">{{ item.content }}</span>
+            <a href="javascript:;" v-if="item.name == '麦克'"><img src="images/jn_28.png" v-on:click="haha($event)"
+                alt="" />
+              <audio id="player1" src='audio/51.wav'>
+              </audio></a>
+          </div> -->
+          <!-- 波形绘制区域 -->
+          <div class="pd recpower" style="display: none;">
+            <div style="height:40px;width:300px;background:#999;position:relative;">
+              <div class="recpowerx" style="height:40px;background:#0B1;position:absolute;"></div>
+              <div class="recpowert" style="padding-left:50px; line-height:40px; position: relative;"></div>
+            </div>
+          </div>
+          <!-- <div class="pd waveBox">
+            <div style="border:1px solid #ccc;display:inline-block">
+              <div style="height:48px;width:300px;" class="recwave"></div>
+            </div>
+          </div> -->
+          <div class="voice_right_box">
+            <p class="resultContent"></p>
+            <div class="clearfix">
+              <!-- <a class="floatLeft" href="javascript:;"  v-on:click="haha('playerNow')">12 "
+                <audio id="playerNow" src=""></audio>
+              </a> -->
+              <div class="pd waveBox" style="float:left;">
+                <div style="display:inline-block">
+                  <div style="height:48px;width:300px;" class="recwave"></div>
+                </div>
+              </div>
+
+              <i class="floatRight" @mousedown="talk(1)" @mouseup="talk(0)">
+                <img src="images/jn_29.png" alt="" />
+              </i>
+              <ul id="roll">
+                <li>提示：跟读“麦克”的对话，训练口语能力。</li>
+                <li>提示：按住话筒图标录音，松开自动识别、打分。</li>
+                <li>提示：录音时间请控制在60秒以内。</li>
+                <li>提示：缓存列表便于复盘，最多保留6条历史记录。</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+
+
+        <div class="voice_right_change">
+          <a href="javascript:;" @click="next(1)">上一句</a>
+          <a href="javascript:;" @click="next(2)">下一句</a>
+        </div>
+        <template>
+          <div class="voice_right_mark"><span>当前评分：<b class="score"></b></span>
+            <em class="el-tag el-tag--success el-tag--mini el-tag--light">A：优秀</em>
+            <em class="el-tag el-tag--info el-tag--mini el-tag--light">B：良好</em>
+            <em class="el-tag el-tag--warning el-tag--mini el-tag--light">C：一般</em>
+            <em class="el-tag el-tag--danger el-tag--mini el-tag--light">D：较差</em>
+            <!-- <div class="voice_right_mark"><span>当前评分：<b>A</b></span><i><em>A：优秀</em><em>B：良好</em><em>C：差</em></i></div> -->
+            <!-- <el-tag size="mini" type="success" name="1">A：优秀 </el-tag>
+            <el-tag size="mini" type="info">B：良好</el-tag>
+            <el-tag size="mini" type="warning">C：一般</el-tag>
+            <el-tag size="mini" type="danger"> D：较差</el-tag> -->
+          </div>
+        </template>
+        <div class="voice_right_table" style="display:none;">
+          <table width="100%" border="0" cellspacing="0" cellpadding="0">
+            <tr>
+              <th width="40">序号</th>
+              <th width="180">测评语句</th>
+              <th width="140">测评语音</th>
+              <th width="50">评分</th>
+              <!-- <th>操作</th>  -->
+            </tr>
+            <tr v-for="item in resultList">
+              <td>{{ item.id }}</td>
+              <td><span class="content">{{ item.content }}</span></td>
+              <!-- <td><a class="voice" href="javascript:;">{{ item.time }} "</a></td> -->
+              <td>
+                <a class="voice" href="javascript:;" v-on:click="haha(item.id)">{{ item.time }} "
+                  <audio :id=item.id :src='item.file'>
+                  </audio>
+                </a>
+                <!-- <a href="javascript:;" v-if="item.name == '麦克'"><img src="images/jn_28.png" v-on:click="haha($event)" alt="" />
+                  <img :src="item.file" alt="" srcset=""> -->
+                </a>
+              </td>
+              <td><b>{{ item.result }}</b></td>
+              <!-- <td><a href="javascript:;" v-on:click="haha('agin')">再听一次</a>
+                <audio id="agin" :src='item.orginFile'>
+                </audio>
+              </td> -->
+            </tr>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!--页脚-->
+    <footer-template></footer-template>
+
+    <!--登录-->
+    <div class="blacklayer"></div>
+    <div class="login_layer">
+      <h2><img src="images/jn_logo.png" width="475" height="66" alt="" /></h2>
+      <h3>欢迎登录</h3>
+      <p>国际展会场景下<span>留学生商贸汉语应用</span>虚拟仿真教学系统</p>
+      <ul>
+        <li><input placeholder="请输入账号" type="text"></li>
+        <li><input placeholder="请输入密码" type="password"></li>
+      </ul>
+      <a class="login_btn" href="javascript:;">立即登录</a>
+    </div>
+  </div>
+
+  <script type="text/javascript" src="js/jquery-1.8.3.min.js"></script>
+  <script type="text/javascript" src="js/jquery.SuperSlide.2.1.3.js"></script>
+  <script type="text/javascript">
+    $(function () {
+      //选项卡
+      $('.voice_tab li').on('click', function () {
+        $(this).addClass('on').siblings().removeClass('on');
+        $('.voice_content').hide().eq($(this).index()).show();
+        console.log($(this).index())
+      });
+
+    })
+  </script>
+
+  <script type="text/javascript" src="js/template.js"></script>
+  <script src="https://unpkg.com/vue/dist/vue.js"></script>
+  <script>
+    $(function () {
+      $(".num2").addClass("on");
+    })
+    var app = new Vue({
+      data: {
+        demoContent: [], // 演示内容
+        location: 1, // 数据位置
+        // 旗袍
+        cheongsam: [{
+          num: 1,
+          name: "麦克",
+          content: "上次来中国，我给太太买了一条旗袍带回去，家人朋友都赞不绝口，这次我想采购一批回去试着销售一下。",
+          file: "audio/5.wav"
+        }, {
+          num: 1,
+          name: "张丽",
+          content: "您真有眼光！旗袍是中国的国粹之一，无论在中国还是国际上都非常有市场。我们美华总公司和工厂都在浙江，从事旗袍生产和销售已经几十年了。",
+          file: "audio/6.wav"
+        }, {
+          name: "",
+          content: "",
+        }, {
+          num: 2,
+          name: "张丽",
+          content: "这是我们的旗袍样品，旗袍款式的区分主要有：领型、开襟、扣型、袖型、摆型和滚边。旗袍的材质主要有：真丝、棉布、化纤这几种。",
+          file: "audio/7.wav"
+        }, {
+          num: 2,
+          name: "麦克",
+          content: "这几款不错，款式、花色都好看，材质也很舒服。",
+          file: "audio/8.wav"
+        }, {
+          name: "",
+          content: "",
+        }, {
+          num: 3,
+          name: "张丽",
+          content: "您太会选了！这几款都是我们公司今年推出的最新款，既传统古典，又融合了时尚元素，您看它的袖型和开襟，都是今年的流行款式，十分畅销。",
+          file: "audio/9.wav"
+        }, {
+          num: 3,
+          name: "麦克",
+          content: "嗯，是挺好看的，不过欧美人身形和中国人不太一样，旗袍的型号有哪些呢？",
+          file: "audio/10.wav"
+        }, {
+          name: "",
+          content: "",
+        }, {
+          num: 4,
+          name: "张丽",
+          content: "这个您不用担心，我们常年做出口，如果量大的话可以根据各个国家和地区的情况提供定制，包括型号、花色、款式等都可以适当调整。",
+          file: "audio/11.wav"
+        }, {
+          num: 4,
+          name: "麦克",
+          content: "太好了！那我回国先商量一下，再给您发邮件详谈。",
+          file: "audio/12.wav"
+        }, {
+          name: "",
+          content: "",
+        }, {
+          num: 5,
+          name: "张丽",
+          content: "好的，您需要一份产品目录吗？",
+          file: "audio/13.wav"
+        }, {
+          num: 5,
+          name: "张丽",
+          content: "另外赠送您一份小礼品，我们的特色香囊。",
+          file: "audio/14.wav"
+        }, {
+          num: 5,
+          name: "麦克",
+          content: "非常感谢。",
+          file: "audio/15.wav"
+        },
+        ],
+        // 陶瓷
+        ceramics: [
+          {
+            num: 1,
+            name: "王明",
+            content: "这种茶具胎质细腻，时间长也不会变形或掉色，您可以根据需要自由搭配，也可以定制。这是我们的产品目录和报价，您可以先看一下。",
+            file: "audio/17.wav"
+          }, {
+            num: 1,
+            name: "麦克",
+            content: "这个报价比别的展位高很多。",
+            file: "audio/18.wav"
+          }, {
+            name: "",
+            content: "",
+          }, {
+            num: 2,
+            name: "王明",
+            content: "一分钱一分货。这款六件套茶具是我们的热卖商品。刚才是最低起订价，具体报价根据件数、搭配、花色、包装来确定，订货量越大优惠越大。",
+            file: "audio/19.wav"
+          }, {
+            num: 2,
+            name: "麦克",
+            content: "我定先800套，有优惠吗？",
+            file: "audio/20.wav"
+          }, {
+            name: "",
+            content: "",
+          }, {
+            num: 3,
+            name: "王明",
+            content: "您这个还没达到我们最低起订量。不过这次展会订单有优享。我们给2%的折扣。",
+            file: "audio/21.wav"
+          }, {
+            num: 3,
+            name: "麦克",
+            content: "能不能再低3%。",
+            file: "audio/22.wav"
+          }, {
+            name: "",
+            content: "",
+          }, {
+            num: 4,
+            name: "王明",
+            content: "如果增加20%的订货量，我们可以降价3%。",
+            file: "audio/23.wav"
+          }, {
+            num: 4,
+            name: "麦克",
+            content: "你们是FOB广州吗？",
+            file: "audio/24.wav"
+          }, {
+            name: "",
+            content: "",
+          }, {
+            num: 5,
+            name: "王明",
+            content: "是的，我们所有货物都在广州装运。我们运输包装符合国家安全标准，保证运输安全性高。",
+            file: "audio/25.wav"
+          }, {
+            num: 5,
+            name: "麦克",
+            content: "谢谢，我们回去考虑一下。",
+            file: "audio/26.wav"
+          }
+        ],
+        // 合同
+        contract: [
+          {
+            num: 1,
+            name: "李刚",
+            content: "这是我们新研发的医用智能机器人，详细的种类和功能之前已经给您介绍过了，它具有辅助临床医疗、运送物品、移动病人等功能。您看一下产品展示。",
+            file: "audio/38.wav"
+          }, {
+            num: 1,
+            name: "麦克",
+            content: "功能实用又齐全！就订这款了，价格方面没问题，就按我们之前商量的订货数量，这批医用机器人多久能交货？",
+            file: "audio/39.wav"
+          }, {
+            name: "",
+            content: "",
+          }, {
+            num: 2,
+            name: "李刚",
+            content: "大概要半个月才能装运。",
+            file: "audio/40.wav"
+          }, {
+            num: 2,
+            name: "麦克",
+            content: "这次为什么交货时间那么长？",
+            file: "audio/41.wav"
+          }, {
+            name: "",
+            content: "",
+          }, {
+            num: 3,
+            name: "李刚",
+            content: "这批医用机器人刚刚研发投入市场，没有很多现货。它的功能复杂，备货时间长，需要反复调试后才可出货。此外，我们还需要充足的时间制单、办理海关出口手续。",
+            file: "audio/42.wav"
+          }, {
+            num: 3,
+            name: "麦克",
+            content: "好，我们按照老规矩，请一定要按时交货，逾期的话，我们还是按合同办事。",
+            file: "audio/43.wav"
+          }, {
+            name: "",
+            content: "",
+          }, {
+            num: 4,
+            name: "李刚",
+            content: "您放心，我们一直都是守合同重信用。",
+            file: "audio/44.wav"
+          }, {
+            num: 4,
+            name: "麦克",
+            content: "这次除了信用证付款，你们还接受其他付款方式吗？您也知道，银行开具信用证不仅要收取数额不小的手续费，而且手续复杂，之前我们也反复协商，如果能接受网上银行转账，不仅我们方便付款，你们也方便收款，希望能考虑一下。",
+            file: "audio/45.wav"
+          }, {
+            name: "",
+            content: "",
+          }, {
+            num: 5,
+            name: "李刚",
+            content: "关于付款方式我们更倾向于信用证付款。我们公司暂时还未接受过其他付款方式，请您谅解。特殊情况，我需要请示一下上级，请稍等。",
+            file: "audio/46.wav"
+          }, {
+            num: 5,
+            name: "麦克",
+            content: "好的",
+            file: "audio/48.wav"
+          }, {
+            name: "",
+            content: "",
+          }, {
+            num: 6,
+            name: "李刚",
+            content: "赵总，这次是我们的老客户，他们这次想更改支付方式，直接银行转账。",
+            file: "audio/49.wav"
+          }, {
+            num: 6,
+            name: "赵总",
+            content: "......可以，但是风险较大，定金需要增加50%。",
+            file: "audio/50.wav"
+          }, {
+            num: 6,
+            name: "李刚",
+            content: "刚才跟老板联系了一下，可以接受，但是定金需要增加到50%。",
+            file: "audio/51.wav"
+          }, {
+            num: 6,
+            name: "麦克",
+            content: "目前全球经济不稳定，为了保险起见，我们最多只能预付40%。可以提高定金比例，但是我们希望交货周期能缩短10天。",
+            file: "audio/52.wav"
+          }, {
+            name: "",
+            content: "",
+          }, {
+            num: 7,
+            name: "李刚",
+            content: "好，就这么定了，您稍等，我们拟合同一下。",
+            file: "audio/54.wav"
+          }, {
+            num: 7,
+            name: "麦克",
+            content: "好的，非常感谢。",
+            file: "audio/55.wav"
+          }, {
+            name: "",
+            content: "",
+          }, {
+            num: 8,
+            name: "李刚",
+            content: "这是根据我们刚刚协商的内容修改的合同。您仔细确认一下，如果对条款没有异议，请签名确认，我们就按合同执行了。",
+            file: "audio/56"
+          }, {
+            num: 8,
+            name: "麦克",
+            content: "已经确认。现在没有问题了，合作愉快。",
+            file: "audio/57.wav"
+          }
+        ],
+        // 结果列表
+        resultList: [
+        ]
+      },
+
+      methods: {
+        talk(type) {
+          // console.log(type)
+          if (type == 1) {
+            recStart();
+          } else {
+            recStop();
+          }
+        },
+        // 对话切换
+        next(n) {
+          $(".resultContent").text("");
+          $(".score").text("")
+          var num = this.demoContent[0].num;
+          this.demoContent = [];
+          if (n == 1 && num != 1) {
+            num -= 1;
+          }
+
+          if (this.location == 1) {
+            if (n == 2 && num < this.cheongsam[this.cheongsam.length - 1].num) {
+              num += 1;
+            } else if (n == 2) {
+              num = this.cheongsam[this.cheongsam.length - 1].num;
+            }
+            this.cheongsam.find((item) => {
+              if (item.num == num) {
+                this.demoContent.push(item);
+              }
+            })
+          }
+          else if (this.location == 2) {
+            if (n == 2 && num < this.ceramics[this.ceramics.length - 1].num) {
+              num += 1;
+            } else if (n == 2) {
+              num = this.ceramics[this.ceramics.length - 1].num;
+            }
+            this.ceramics.find((item) => {
+              if (item.num == num) {
+                this.demoContent.push(item);
+              }
+            })
+          } else {
+            if (n == 2 && num < this.contract[this.contract.length - 1].num) {
+              num += 1;
+            } else if (n == 2) {
+              num = this.contract[this.contract.length - 1].num;
+            }
+
+            this.contract.find((item) => {
+              if (item.num == num) {
+                this.demoContent.push(item);
+              }
+            })
+          }
+        },
+        // 点击对话
+        clickSpeak(num, type) {
+          this.demoContent = [];
+          $(".resultContent").text("");
+          $(".score").text("")
+          this.location = type;
+          // debugger
+          if (type == 1) {
+            this.cheongsam.find((item) => {
+              if (item.num == num) {
+                this.demoContent.push(item);
+              }
+            })
+          } else if (type == 2) {
+            this.ceramics.find((item) => {
+              if (item.num == num) {
+                this.demoContent.push(item);
+              }
+            })
+          } else {
+            this.contract.find((item) => {
+              if (item.num == num) {
+                this.demoContent.push(item);
+              }
+            })
+          }
+        },
+        haha(idString) {
+          var player = document.getElementById(idString);
+          player.play();
+        }
+      },
+      created() {
+        this.cheongsam.find((item) => {
+          if (item.num == 1) {
+            this.demoContent.push(item);
+          }
+        })
+      },
+      components: {
+        "title-template": {
+          template: title_template,
+        },
+        "footer-template": {
+          template: footer_template,
+        },
+      }
+    }).$mount('#app');
+
+
+    //简单控制台直接测试方法：在任意(无CSP限制)页面内加载Recorder，加载成功后再执行一次本代码立即会有效果，import("https://xiangyuecn.gitee.io/recorder/recorder.mp3.min.js").then(function(s){console.log("import ok")}).catch(function(e){console.error("import fail",e)})
+
+    var rec, wave;
+    var idNo = 1;
+    /**调用open打开录音请求好录音权限**/
+    var recOpen = function (success) {//一般在显示出录音按钮或相关的录音界面时进行此方法调用，后面用户点击开始录音时就能畅通无阻了
+      rec = null;
+      wave = null;
+
+      var newRec = Recorder({
+        type: "wav", sampleRate: 16000, bitRate: 16 //mp3格式，指定采样率hz、比特率kbps，其他参数使用默认配置；注意：是数字的参数必须提供数字，不要用字符串；需要使用的type类型，需提前把格式支持文件加载进来，比如使用wav格式需要提前加载wav.js编码引擎
+        , onProcess: function (buffers, powerLevel, bufferDuration, bufferSampleRate, newBufferIdx, asyncEnd) {
+          //录音实时回调，大约1秒调用12次本回调
+          //可利用extensions/waveview.js扩展实时绘制波形
+          //可利用extensions/sonic.js扩展实时变速变调，此扩展计算量巨大，onProcess需要返回true开启异步模式
+          document.querySelector(".recpowerx").style.width = powerLevel + "%";
+          document.querySelector(".recpowert").innerText = bufferDuration + " / " + powerLevel;
+
+          //可视化图形绘制
+          wave.input(buffers[buffers.length - 1], powerLevel, bufferSampleRate);
+        }
+      });
+
+      //var dialog=createDelayDialog(); 我们可以选择性的弹一个对话框：为了防止移动端浏览器存在第三种情况：用户忽略，并且（或者国产系统UC系）浏览器没有任何回调，此处demo省略了弹窗的代码
+      newRec.open(function () {//打开麦克风授权获得相关资源
+        //dialog&&dialog.Cancel(); 如果开启了弹框，此处需要取消
+        //rec.start() 此处可以立即开始录音，但不建议这样编写，因为open是一个延迟漫长的操作，通过两次用户操作来分别调用open和start是推荐的最佳流程
+        //此处创建这些音频可视化图形绘制浏览器支持妥妥的
+        // waveStore.WaveView = Recorder.WaveView({ elem: ".recwave" });
+        // waveStore.SurferView = Recorder.WaveSurferView({ elem: ".recwave" });
+        // waveStore.Histogram1 = Recorder.FrequencyHistogramView({ elem: ".recwave" });
+        // waveStore.Histogram2 = Recorder.FrequencyHistogramView({
+        //     elem: ".recwave"
+        //     , lineCount: 90
+        //     , position: 0
+        //     , minHeight: 1
+        //     , stripeEnable: false
+        // });
+        rec = newRec;
+        //此处创建这些音频可视化图形绘制浏览器支持妥妥的
+        wave = Recorder.FrequencyHistogramView({ elem: ".recwave" });
+        console.log(1)
+        success && success();
+
+
+      }, function (msg, isUserNotAllow) {//用户拒绝未授权或不支持
+        //dialog&&dialog.Cancel(); 如果开启了弹框，此处需要取消
+        console.log((isUserNotAllow ? "UserNotAllow，" : "") + "无法录音:" + msg);
+      });
+    };
+
+    /**开始录音**/
+    function recStart() {//打开了录音后才能进行start、stop调用
+      rec.start();
+    };
+
+    /**结束录音**/
+    function recStop() {
+      // var self = this;
+      rec.stop(function (blob, duration) {
+        if (duration < 100 || duration > 60 * 1000) {
+          return false;
+        }
+        console.log(blob, (window.URL || webkitURL).createObjectURL(blob), "时长:" + duration + "ms");
+        //rec.close();//释放录音资源，当然可以不释放，后面可以连续调用start；但不释放时系统或浏览器会一直提示在录音，最佳操作是录完就close掉
+        // rec = null;
+
+        //已经拿到blob文件对象想干嘛就干嘛：立即播放、上传
+
+        // /*** 【立即播放例子】 ***/
+        // var audio = document.createElement("audio");
+        // audio.controls = true;
+        // document.body.appendChild(audio);
+        // //简单利用URL生成播放地址，注意不用了时需要revokeObjectURL，否则霸占内存
+        var mysrc = (window.URL || webkitURL).createObjectURL(blob);
+        // audio.play();
+
+        // 推送
+        /***方式一：将blob文件转成base64纯文本编码，使用普通application/x-www-form-urlencoded表单上传***/
+        var reader = new FileReader();
+        // debugger
+        reader.onloadend = function () {
+          $.ajax({
+            url: config().PushAudioUrl//上传接口地址
+            , type: "POST"
+            , handler: {
+
+            }
+            , data: {
+              mime: blob.type //告诉后端，这个录音是什么格式的，可能前后端都固定的mp3可以不用写
+              , upfileB64: (/.+;\s*base64\s*,\s*(.+)$/i.exec(reader.result) || [])[1] //录音文件内容，后端进行base64解码成二进制
+              //...其他表单参数
+            }
+            , success: function (v) {
+              console.log("上传成功", v);
+              // debugger
+              if (v.result.err_no == 0) {
+                $(".resultContent").text(v.result.result.join(""))
+                // 正则提取回答的汉子
+                var resut = GetChinese(v.result.result.join(""));
+                // debugger
+                var mike = $(".mike").eq(0).text()
+                // 正则提取麦克对话中的汉子
+                mike = GetChinese(mike);
+
+                // 检测匹配度
+                var score = Number(similarity2(mike, resut)) * 100
+
+                if (score >= 90) {
+                  $(".score").text("A")
+                } else if (score >= 80) {
+                  $(".score").text("B")
+                } else if (score >= 60) {
+                  $(".score").text("C")
+                } else {
+                  $(".score").text("D")
+                }
+                // var x = document.getElementsByClassName("mike");
+                var file = $('#play').attr('src')
+                // var orginFile = $('#player').attr('src')
+
+                xixi(idNo++, v.result.result.join(""), Math.floor(duration / 1000), $(".score").text(), mysrc, null);
+                $('#playerNow').attr('src', mysrc);
+                $('.voice_right_table').show();
+              }
+            }
+            , error: function (s) {
+              console.error("上传失败", s);
+            }
+          });
+        };
+        reader.readAsDataURL(blob);
+      }, function (msg) {
+        console.log("录音失败:" + msg);
+        rec.close();//可以通过stop方法的第3个参数来自动调用close
+        rec = null;
+      });
+    };
+
+    //这里假设立即运行，只录3秒，录完后立即播放，本段代码copy到控制台内可直接运行
+    recOpen(function () {
+      recStart();
+      setTimeout(recStop, 99);
+    });
+    // recStart()
+
+    function xixi(index, voice_content, times, results, files, orginFiles) {
+      if (app.resultList.length >= 6) {
+        app.resultList.splice(0, 1);
+      };
+
+      app.resultList.push({
+        id: index,
+        content: voice_content,
+        time: times,
+        result: results,
+        file: files,
+        orginFile: orginFiles
+      })
+    }
+
+    function claer() {
+      $(".score").text("");
+      $(".resultContent").text("")
+    }
+    function GetChinese(strValue) {
+      if (strValue != null && strValue != "") {
+        var reg = /[\u4e00-\u9fa5]/g;
+        return strValue.match(reg).join("");
+      }
+      else
+        return "";
+    }
+
+    function similarity2(s, t) {
+      var l = s.length > t.length ? s.length : t.length;
+      var d = strSimilarity2Number(s, t);
+      return (1 - d / l).toFixed(4);
+
+    }
+
+    function strSimilarity2Number(s, t) {
+      var n = s.length, m = t.length, d = [];
+      var i, j, s_i, t_j, cost;
+      if (n == 0) return m;
+      if (m == 0) return n;
+      for (i = 0; i <= n; i++) {
+        d[i] = [];
+        d[i][0] = i;
+      }
+      for (j = 0; j <= m; j++) {
+        d[0][j] = j;
+      }
+      for (i = 1; i <= n; i++) {
+        s_i = s.charAt(i - 1);
+        for (j = 1; j <= m; j++) {
+          t_j = t.charAt(j - 1);
+          if (s_i == t_j) {
+            cost = 0;
+          } else {
+            cost = 1;
+          }
+          d[i][j] = Minimum(d[i - 1][j] + 1, d[i][j - 1] + 1, d[i - 1][j - 1] + cost);
+        }
+      }
+      return d[n][m];
+    }
+
+    function Minimum(a, b, c) {
+      return a < b ? (a < c ? a : c) : (b < c ? b : c);
+    }
+  </script>
+  <script>
+    $(function () {
+      //document.getElementById()的最简化应用
+      function $(element) {
+        if (arguments.length > 1) {
+          for (var i = 0, length = arguments.length, elements = []; i < length; i++) {
+            elements.push($(arguments[i]));
+          }
+          return elements;
+        }
+        if (typeof element == "string") {
+          return document.getElementById(element);
+        } else {
+          return element;
+        }
+      }
+      //类创建函数
+      var Class = {
+        create: function () {
+          return function () {
+            this.initialize.apply(this, arguments);
+          }
+        }
+      }
+      //对象属性方法扩展
+      Function.prototype.bind = function (object) {
+        var method = this;
+        return function () {
+          method.apply(object, arguments);
+        }
+      }
+      var Scroll = Class.create();
+      Scroll.prototype = {
+        //第一个参数定义要滚动的区域,第二个参数定义每次滚动的高度
+        initialize: function (element, height, delay) {
+          this.element = $(element);
+          this.element.innerHTML += this.element.innerHTML;
+          this.height = height;
+          this.delay = delay * 1000;
+          this.maxHeight = this.element.scrollHeight / 2;
+          this.counter = 0;
+          this.scroll();
+          this.timer = "";
+          this.element.onmouseover = this.stop.bind(this);
+          this.element.onmouseout = function () { this.timer = setTimeout(this.scroll.bind(this), 1000); }.bind(this);
+        },
+        scroll: function () {
+          if (this.element.scrollTop < this.maxHeight) {
+            this.element.scrollTop++;
+            this.counter++;
+          } else {
+            this.element.scrollTop = 0;
+            this.counter = 0;
+          }
+
+          if (this.counter < this.height) {
+            this.timer = setTimeout(this.scroll.bind(this), 5);
+          } else {
+            this.counter = 0;
+            this.timer = setTimeout(this.scroll.bind(this), this.delay);
+          }
+        },
+        stop: function () {
+          clearTimeout(this.timer);
+        }
+      }
+      new Scroll('roll', 22, 5)
+    })
+  </script>
+</body>
+
+</html>
